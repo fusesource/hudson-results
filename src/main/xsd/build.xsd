@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="matrix-run" type="matrix-runType"/>
+  <xs:complexType name="hudson.model.Cause_-UserCauseType">
+    <xs:sequence>
+      <xs:element type="xs:string" name="authenticationName"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="upstreamCausesType">
+    <xs:sequence>
+      <xs:element type="hudson.model.Cause_-UserCauseType" name="hudson.model.Cause_-UserCause"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="hudson.model.Cause_-UpstreamCauseType">
+    <xs:sequence>
+      <xs:element type="xs:string" name="upstreamProject"/>
+      <xs:element type="xs:string" name="upstreamUrl"/>
+      <xs:element type="xs:byte" name="upstreamBuild"/>
+      <xs:element type="upstreamCausesType" name="upstreamCauses"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="causesType">
+    <xs:sequence>
+      <xs:element type="hudson.model.Cause_-UpstreamCauseType" name="hudson.model.Cause_-UpstreamCause"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="hudson.model.CauseActionType">
+    <xs:sequence>
+      <xs:element type="causesType" name="causes"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="sha1Type">
+    <xs:simpleContent>
+      <xs:extension base="xs:string">
+        <xs:attribute type="xs:string" name="reference"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:complexType name="hudson.plugins.git.BranchType">
+    <xs:sequence>
+      <xs:element type="sha1Type" name="sha1"/>
+      <xs:element type="xs:string" name="name"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="branchesType">
+    <xs:sequence>
+      <xs:element type="hudson.plugins.git.BranchType" name="hudson.plugins.git.Branch"/>
+    </xs:sequence>
+    <xs:attribute type="xs:string" name="class"/>
+  </xs:complexType>
+  <xs:complexType name="revisionType">
+    <xs:sequence>
+      <xs:element type="xs:string" name="sha1"/>
+      <xs:element type="branchesType" name="branches"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="hudson.plugins.git.util.BuildType">
+    <xs:sequence>
+      <xs:element type="revisionType" name="revision"/>
+      <xs:element type="xs:byte" name="hudsonBuildNumber"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="entryType">
+    <xs:sequence>
+      <xs:element type="xs:string" name="string"/>
+      <xs:element type="hudson.plugins.git.util.BuildType" name="hudson.plugins.git.util.Build"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="buildsByBranchNameType">
+    <xs:sequence>
+      <xs:element type="entryType" name="entry"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="lastBuildType">
+    <xs:simpleContent>
+      <xs:extension base="xs:string">
+        <xs:attribute type="xs:string" name="reference"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:complexType name="hudson.plugins.git.util.BuildDataType">
+    <xs:sequence>
+      <xs:element type="buildsByBranchNameType" name="buildsByBranchName"/>
+      <xs:element type="lastBuildType" name="lastBuild"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="ownerType">
+    <xs:simpleContent>
+      <xs:extension base="xs:string">
+        <xs:attribute type="xs:string" name="class"/>
+        <xs:attribute type="xs:string" name="reference"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:complexType name="descriptionsType">
+    <xs:simpleContent>
+      <xs:extension base="xs:string">
+        <xs:attribute type="xs:string" name="class"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:complexType name="hudson.tasks.junit.TestResultActionType">
+    <xs:sequence>
+      <xs:element type="ownerType" name="owner"/>
+      <xs:element type="descriptionsType" name="descriptions"/>
+      <xs:element type="xs:byte" name="failCount"/>
+      <xs:element type="xs:byte" name="skipCount"/>
+      <xs:element type="xs:short" name="totalCount"/>
+      <xs:element type="xs:string" name="testData"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="actionsType">
+    <xs:sequence>
+      <xs:element type="hudson.model.CauseActionType" name="hudson.model.CauseAction"/>
+      <xs:element type="hudson.plugins.git.util.BuildDataType" name="hudson.plugins.git.util.BuildData"/>
+      <xs:element type="xs:string" name="hudson.scm.SCMRevisionState_-None"/>
+      <xs:element type="hudson.tasks.junit.TestResultActionType" name="hudson.tasks.junit.TestResultAction"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="scmType">
+    <xs:sequence>
+      <xs:element type="xs:string" name="authorOrCommitter"/>
+    </xs:sequence>
+    <xs:attribute type="xs:string" name="class"/>
+  </xs:complexType>
+  <xs:complexType name="culpritsType">
+    <xs:sequence>
+      <xs:element name="string" maxOccurs="unbounded" minOccurs="0">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="gtully"/>
+            <xs:enumeration value="Kevin Earls"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="matrix-runType">
+    <xs:sequence>
+      <xs:element type="actionsType" name="actions"/>
+      <xs:element type="xs:byte" name="number"/>
+      <xs:element type="xs:string" name="result"/>
+      <xs:element type="xs:int" name="duration"/>
+      <xs:element type="xs:string" name="charset"/>
+      <xs:element type="xs:string" name="keepLog"/>
+      <xs:element type="xs:string" name="builtOn"/>
+      <xs:element type="xs:string" name="workspace"/>
+      <xs:element type="xs:string" name="hudsonVersion"/>
+      <xs:element type="scmType" name="scm"/>
+      <xs:element type="culpritsType" name="culprits"/>
+    </xs:sequence>
+  </xs:complexType>
+</xs:schema>
