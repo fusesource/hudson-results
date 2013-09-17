@@ -1,0 +1,5 @@
+src/main/java/generated/
+target/
+results/
+.idea
+hudson-results.iml
