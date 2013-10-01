@@ -109,13 +109,19 @@ public class SummarizeBuildResults {
             Collections.reverse(contents);
 
             if (!contents.isEmpty()) {
-                return contents.get(0);
-            } else {
-                return null;
+                File lastBuildDirectory = contents.get(0);
+                String latestBuildFileName = lastBuildDirectory.getAbsolutePath() + "/build.xml";
+                File lastBuildFile = new File(latestBuildFileName);
+                if (lastBuildFile.exists()) {
+                    return lastBuildDirectory;
+                } else if (contents.size() > 1) {
+                    System.out.println(">>>> Couldn't find [" + latestBuildFileName + "] using " + contents.get(2));
+                    return contents.get(1);
+                }
             }
-        } else {
-            return null;
         }
+
+        return null;
     }
 
 
@@ -245,7 +251,7 @@ public class SummarizeBuildResults {
                         try {
                             String buildDateTime = latestBuildDirectory.getName(); 	// directory name of the build is date time in the format 2012-11-02_21-09-35
                             String latestBuildFileName = latestBuildDirectory.getAbsolutePath() + "/build.xml";
-                            MatrixRunType mrt = getTestSuiteFromFile(latestBuildFileName);
+                            MatrixRunType mrt = getTestSuiteFromFile(latestBuildFileName);  // Gets FileNotFoundException...can we get second oldest here?
                             ActionsType actions = mrt.getActions();
                             HudsonTasksJunitTestResultActionType junitResults = actions.getHudsonTasksJunitTestResultAction();
 
@@ -264,7 +270,7 @@ public class SummarizeBuildResults {
                             }
                             platformResults.add(buildResult);
                         } catch(Exception e) {
-                            // TODO this could occur if the build is still running.
+                            e.printStackTrace();
                             System.err.println("************ Exception " + e.getMessage() + " on " + latestBuildDirectory.getAbsolutePath());
                         }
 
