@@ -16,6 +16,10 @@
  */
 package org.fusesource.hudsonresults;
 
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Locale;
+
 public class BuildResult {
 	private String name;
 	private String runDate;
@@ -26,6 +30,8 @@ public class BuildResult {
 	private JDK jdk;
 	private PLATFORM platform;	// i.e. Ubuntu, Windows, AIX
     private Integer buildNumber;
+
+    private static final Locale currentLocale =  Locale.getDefault();
 
 	/**
 	 * 
@@ -132,5 +138,27 @@ public class BuildResult {
         int minutes = (int) (duration / (60 * 1000)) % 60;
         int seconds = (int) (duration / 1000) % 60;
         return String.format("%d:%02d:%02d", hours, minutes, seconds);
+    }
+
+
+    /**
+     * Run dates look like:  "2013-09-07_00-07-19";  This method returns a shorter formatted
+     * date like "Dec 2"
+     *
+     * @return Formatted date: "SEP 07"
+     */
+    public String getFormattedRunDate() {
+        int firstDash = runDate.indexOf("-");
+        int secondDash = runDate.indexOf("-", firstDash + 1);
+        String month = runDate.substring(firstDash + 1, firstDash + 3);
+        String day = runDate.substring(secondDash + 1, secondDash + 3);
+
+        Calendar cal = Calendar.getInstance();
+        cal.set(Calendar.MONTH, Integer.parseInt(month) - 1);
+        cal.set(Calendar.DAY_OF_MONTH, Integer.parseInt(day));
+
+        SimpleDateFormat formatter = new SimpleDateFormat("MMM d", currentLocale);
+        String result = formatter.format(cal.getTime());
+        return result;
     }
 }

@@ -177,7 +177,7 @@ public class SummarizeBuildResults {
                             String linkToResultsPage = REPORT_URL_ROOT + projectName + "/" + br.getBuildNumber() + "/" + "jdk=" + jdk + ",label=" + platform + "/";
 
                             String testResult = "<a href=\"" + linkToResultsPage + "\">" + br.getFailedTests() + "/" + br.getTestsRun() + "</a>"
-                                    + "<br/><small>(" + br.getFormattedDuration() + ")</small>";    // TODO this needs to be smaller.
+                                    + "<br/><small><small>(" + br.getFormattedDuration() + " " + br.getFormattedRunDate() + ")</small></small>";    // TODO do this with CSS
                             if (br.getResult().equalsIgnoreCase("success")) {
                                 writer.write(passedTdOpenTag + testResult + tdCloseTag);
                             } else if (br.getTestsRun().equals(0)) {
