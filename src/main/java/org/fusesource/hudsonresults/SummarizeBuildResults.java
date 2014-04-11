@@ -224,7 +224,7 @@ public class SummarizeBuildResults {
     private FileWriter createResultsFileWriter() throws IOException {
         File resultsDir = new File("results");
         resultsDir.mkdir();
-        String resultsFileName = "/Users/kearls/results/results.html";
+        String resultsFileName = "results/results.html";
         return new FileWriter(resultsFileName);
     }
 
