@@ -17,5 +17,5 @@
 package org.fusesource.hudsonresults;
 
 public enum PLATFORM {
-	ubuntu, windows, aix7, Solaris, rhel, rhel_oracle
+	rhel, windows, aix, solaris
 }

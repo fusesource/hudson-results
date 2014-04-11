@@ -19,7 +19,6 @@ package org.fusesource.hudsonresults;
 import generated.hudson.build.ActionsType;
 import generated.hudson.build.HudsonTasksJunitTestResultActionType;
 import generated.hudson.build.MatrixRunType;
-import org.apache.commons.io.FileUtils;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
@@ -30,6 +29,8 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -38,6 +39,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Create a summary of result of the Platform builds on Hudson in a single html page
@@ -94,20 +96,20 @@ public class SummarizeBuildResults {
 	 * @return cxf-2.6.0.fuse-7-1-x-stable-platform/configurations/axis-jdk/jdk6/axis-label/ubuntu/builds/2012-11-02_21-09-35
 	 */
     private File getLatestBuildDirectory(File targetDirectory) throws IOException {
+        // TODO use FileVisitor here?
+
         if (targetDirectory != null && targetDirectory.listFiles() != null) {
+            // Jenkins creates a numbered symlink for every results directory.  This gets rid of them.
             List<File> fud = Arrays.asList(targetDirectory.listFiles());
+            List<File> contents = fud.stream().
+                    filter(f -> !Files.isSymbolicLink(Paths.get(f.getAbsolutePath()))).
+                    sorted(new BuildDirectoryComparator()).collect(Collectors.toList());
 
-            // Remove symlinks, which are just numbered.  We want to be able to use the date.
-            List<File> contents = new ArrayList<>();
-            for (File f : fud) {
-                if (!FileUtils.isSymlink(f)) {
-                    contents.add(f);
-                }
-            }
-
-            Collections.sort(contents, new BuildDirectoryComparator());
+            //Collections.sort(contents, new BuildDirectoryComparator());
             Collections.reverse(contents);
 
+            // Return the most recent build directory.  The test for lastBuildFile.exists() could fail
+            // if the build is still running.   NOTE: easy to work around with the REST api
             if (!contents.isEmpty()) {
                 File lastBuildDirectory = contents.get(0);
                 String latestBuildFileName = lastBuildDirectory.getAbsolutePath() + "/build.xml";
@@ -115,7 +117,7 @@ public class SummarizeBuildResults {
                 if (lastBuildFile.exists()) {
                     return lastBuildDirectory;
                 } else if (contents.size() > 1) {
-                    System.out.println(">>>> Couldn't find [" + latestBuildFileName + "] using " + contents.get(2));
+                    System.out.println(">>>> Couldn't find [" + latestBuildFileName + "] using " + contents.get(1));
                     return contents.get(1);
                 }
             }
@@ -134,12 +136,51 @@ public class SummarizeBuildResults {
 	 */
 	private List<File> getPlatformDirectories(File hudsonJobsRoot, String directoryMatchExpression) {
 		PlatformDirectoryFilter pdf = new PlatformDirectoryFilter(directoryMatchExpression);
-        File[] files = hudsonJobsRoot.listFiles(pdf);
-		List<File> directories = Arrays.asList(files);
-        Collections.sort(directories);
-		
+        List<File> directories = Arrays.asList(hudsonJobsRoot.listFiles(pdf)).
+                stream().
+                sorted().
+                collect(Collectors.toList());
+
 		return directories;
 	}
+
+    /**
+     *
+     * @param projectName
+     * @param buildResults
+     * @param writer
+     */
+    private void printResultsRow(String projectName, List<BuildResult> buildResults, FileWriter writer) {
+        try {
+            Collections.reverse(buildResults);
+            Collections.sort(buildResults, new BuildResultComparator());   // TODO what does this sort by?  Is there an easier way to deal with jdks and labels?
+
+            writer.write("<td>" + projectName + "</td>");
+            for (PLATFORM platform : PLATFORM.values()) {
+                for (JDK jdk : JDK.values()) {
+                    for (BuildResult br : buildResults) {   // FIXME this is horrible.
+                        if (platform.equals(br.getPlatform()) && jdk.equals(br.getJdk())) {
+                            String linkToResultsPage = REPORT_URL_ROOT + projectName + "/" + br.getBuildNumber() + "/" + "jdk=" + jdk + ",label=" + platform + "/";
+
+                            String testResult = "<a href=\"" + linkToResultsPage + "\">" + br.getFailedTests() + "/" + br.getTestsRun() + "</a>"
+                                    + "<br/><small><small>(" + br.getFormattedDuration() + " " + br.getFormattedRunDate() + ")</small></small>";    // TODO do this with CSS
+                            if (br.getResult().equalsIgnoreCase("success")) {
+                                writer.write(passedTdOpenTag + testResult + tdCloseTag);
+                            } else if (br.getTestsRun().equals(0)) {
+                                writer.write(failedBuildTdOpenTag + testResult + tdCloseTag);
+                            } else {
+                                writer.write(failedTestsTdOpenTag + testResult + tdCloseTag);
+                            }
+                        }
+                    }
+
+                }
+            }
+            writer.write("</tr> " + NEW_LINE);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     /**
      * Write the report to a file.
@@ -161,37 +202,9 @@ public class SummarizeBuildResults {
         printHtmlHeaders(writer);
 
         // Write one row for each project
-        List<String> projectNames = new ArrayList<>(allResults.keySet());
-        Collections.sort(projectNames);
-        for (String projectName : projectNames) {
-            writer.write("    <tr>");
-            List<BuildResult> buildResults = allResults.get(projectName);
-            Collections.reverse(buildResults);
-            Collections.sort(buildResults, new BuildResultComparator());
-
-            writer.write("<td>" + projectName + "</td>");
-            for (PLATFORM platform : PLATFORM.values()) {
-                for (JDK jdk : JDK.values()) {
-                    for (BuildResult br: buildResults) {
-                        if (platform.equals(br.getPlatform()) && jdk.equals(br.getJdk()) && !(jdk.equals(JDK.jdk6) && platform.equals(PLATFORM.rhel))) {
-                            String linkToResultsPage = REPORT_URL_ROOT + projectName + "/" + br.getBuildNumber() + "/" + "jdk=" + jdk + ",label=" + platform + "/";
-
-                            String testResult = "<a href=\"" + linkToResultsPage + "\">" + br.getFailedTests() + "/" + br.getTestsRun() + "</a>"
-                                    + "<br/><small><small>(" + br.getFormattedDuration() + " " + br.getFormattedRunDate() + ")</small></small>";    // TODO do this with CSS
-                            if (br.getResult().equalsIgnoreCase("success")) {
-                                writer.write(passedTdOpenTag + testResult + tdCloseTag);
-                            } else if (br.getTestsRun().equals(0)) {
-                                writer.write(failedBuildTdOpenTag + testResult + tdCloseTag);
-                            } else {
-                                writer.write(failedTestsTdOpenTag + testResult + tdCloseTag);
-                            }
-                        }
-                    }
-
-                }
-            }
-            writer.write("</tr> " + NEW_LINE);
-        }
+        allResults.keySet().stream().
+                sorted().
+                forEach(p -> printResultsRow(p, allResults.get(p), writer));
 
         writer.write("<table>" + NEW_LINE);
         writer.write("<br/>" + NEW_LINE);
@@ -208,10 +221,10 @@ public class SummarizeBuildResults {
      * @return A FileWriter set to wherever we want to write the report
      * @throws IOException
      */
-    private FileWriter getResultFileWriter() throws IOException {
+    private FileWriter createResultsFileWriter() throws IOException {
         File resultsDir = new File("results");
         resultsDir.mkdir();
-        String resultsFileName = "results/results.html";
+        String resultsFileName = "/Users/kearls/results/results.html";
         return new FileWriter(resultsFileName);
     }
 
@@ -225,9 +238,7 @@ public class SummarizeBuildResults {
         writer.write("<td>Platform</td>");
         for (PLATFORM platform : PLATFORM.values()) {
             for (JDK jdk : JDK.values()) {
-                if (!(jdk.equals(JDK.jdk6) && platform.equals(PLATFORM.rhel))) {
-                    writer.write("<td>" + platform + " " + jdk + "</td>");
-                }
+                writer.write("<td>" + platform + " " + jdk + "</td>");
             }
         }
         writer.write("</tr>");
@@ -284,11 +295,15 @@ public class SummarizeBuildResults {
 
 
 	/**
+     * TODO update to use Java8 streams, Java7 file changes where possible.
+     *
+     *
+     *
 	 * @param args optional command line args
 	 * @throws JAXBException 
 	 */
 	public static void main(String[] args) throws JAXBException, IOException {
-        hudsonJobsRootName="/mnt/hudson/jobs";
+        hudsonJobsRootName = "/Users/kearls/data"; //"/mnt/hudson/jobs";
         String directoryMatchExpression = ACCEPT_STRING_RH_6_1;
 
 		if (args.length > 0) {
@@ -301,12 +316,12 @@ public class SummarizeBuildResults {
 
 		System.out.println("Starting at " + hudsonJobsRootName + " matchings on [" + directoryMatchExpression + "]");
 		SummarizeBuildResults me = new SummarizeBuildResults();
-		File theRoot = new File(hudsonJobsRootName);
         File hudsonJobsRoot = new File(hudsonJobsRootName);
-        FileWriter writer = me.getResultFileWriter();
+        FileWriter writer = me.createResultsFileWriter();
         Map<String, List<BuildResult>> allResults = me.getAllResults(hudsonJobsRoot, directoryMatchExpression);
         me.createHTMLSummary(writer, allResults);
-	}
+
+    }
 }
 
 
