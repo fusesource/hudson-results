@@ -27,8 +27,8 @@ public class BuildResult {
 	private Integer testsRun;
 	private Integer failedTests;
     private Integer duration;
-	private JDK jdk;
-	private PLATFORM platform;	// i.e. Ubuntu, Windows, AIX
+	private String jdk;
+	private String platform;	// i.e. Ubuntu, Windows, AIX
     private Integer buildNumber;
 
     private static final Locale currentLocale =  Locale.getDefault();
@@ -43,7 +43,7 @@ public class BuildResult {
 	 * @param testsRun
 	 * @param testsFailed
 	 */
-	public BuildResult(String name, String runDate, JDK jdk, PLATFORM platform, String result, int testsRun, int testsFailed, int duration, int buildNumber) {
+	public BuildResult(String name, String runDate, String jdk, String platform, String result, int testsRun, int testsFailed, int duration, int buildNumber) {
 		this.name = name;
 		this.runDate = runDate;
 		this.jdk = jdk;
@@ -100,16 +100,16 @@ public class BuildResult {
 	public void setFailedTests(Integer failedTests) {
 		this.failedTests = failedTests;
 	}
-	public JDK getJdk() {
+	public String getJdk() {
 		return jdk;
 	}
-	public void setJdk(JDK jdk) {
+	public void setJdk(String jdk) {
 		this.jdk = jdk;
 	}
-	public PLATFORM getPlatform() {
+	public String getPlatform() {
 		return platform;
 	}
-	public void setPlatform(PLATFORM platform) {
+	public void setPlatform(String platform) {
 		this.platform = platform;
 	}
 

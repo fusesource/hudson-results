@@ -30,6 +30,7 @@ import java.io.FileFilter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -39,6 +40,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -60,6 +62,22 @@ public class SummarizeBuildResults {
 
     // Root of URL to link back to test results
     private static final String REPORT_URL_ROOT="http://ci.fusesource.com/hudson/job/";
+
+    // FIXME decide which of these we're going to need, and pick better names.
+    //private Set<String> labels;
+    //private Set<String> jdks;
+    private Set<String> testSuiteNames;
+    private Map<String, Set<String>> axes;
+
+
+    public SummarizeBuildResults(String hudsonJobsRootName) throws IOException {
+        JenkinsJobsVisitor<Path> jenkinsJobsVisitor = new JenkinsJobsVisitor<>();
+        Path rootPath = Paths.get(hudsonJobsRootName);
+        Files.walkFileTree(rootPath, jenkinsJobsVisitor);
+
+        testSuiteNames = jenkinsJobsVisitor.getTestSuiteNames();  // TODO do we need this?
+        axes = jenkinsJobsVisitor.getAxes();
+    }
 
     /**
      *
@@ -96,8 +114,6 @@ public class SummarizeBuildResults {
 	 * @return cxf-2.6.0.fuse-7-1-x-stable-platform/configurations/axis-jdk/jdk6/axis-label/ubuntu/builds/2012-11-02_21-09-35
 	 */
     private File getLatestBuildDirectory(File targetDirectory) throws IOException {
-        // TODO use FileVisitor here?
-
         if (targetDirectory != null && targetDirectory.listFiles() != null) {
             // Jenkins creates a numbered symlink for every results directory.  This gets rid of them.
             List<File> fud = Arrays.asList(targetDirectory.listFiles());
@@ -156,8 +172,12 @@ public class SummarizeBuildResults {
             Collections.sort(buildResults, new BuildResultComparator());   // TODO what does this sort by?  Is there an easier way to deal with jdks and labels?
 
             writer.write("<td>" + projectName + "</td>");
-            for (PLATFORM platform : PLATFORM.values()) {
-                for (JDK jdk : JDK.values()) {
+            List<String> platforms = new ArrayList<String>(axes.keySet());
+            Collections.sort(platforms);
+            for (String platform : platforms) {
+                List<String> jdks = new ArrayList<String>(axes.get(platform));
+                Collections.sort(jdks);
+                for (String jdk : jdks) {
                     for (BuildResult br : buildResults) {   // FIXME this is horrible.
                         if (platform.equals(br.getPlatform()) && jdk.equals(br.getJdk())) {
                             String linkToResultsPage = REPORT_URL_ROOT + projectName + "/" + br.getBuildNumber() + "/" + "jdk=" + jdk + ",label=" + platform + "/";
@@ -236,8 +256,13 @@ public class SummarizeBuildResults {
         writer.write("<thead>");
         writer.write("<tr>");
         writer.write("<td>Platform</td>");
-        for (PLATFORM platform : PLATFORM.values()) {
-            for (JDK jdk : JDK.values()) {
+
+        List<String> platforms = new ArrayList<String>(axes.keySet());
+        Collections.sort(platforms);
+        for (String platform : platforms) {
+            List<String> jdks = new ArrayList<String>(axes.get(platform));
+            Collections.sort(jdks);
+            for (String jdk : jdks) {
                 writer.write("<td>" + platform + " " + jdk + "</td>");
             }
         }
@@ -254,8 +279,12 @@ public class SummarizeBuildResults {
         Map<String, List<BuildResult>> allResults = new HashMap<>();
         List<File>platformDirectories = getPlatformDirectories(hudsonJobsRoot, directoryMatchExpression);
         for (File platformDirectory : platformDirectories) {
-            for (PLATFORM platform : PLATFORM.values()) {
-                for (JDK jdk : JDK.values()) {
+            List<String> platforms = new ArrayList<String>(axes.keySet());
+            Collections.sort(platforms);
+            for (String platform : platforms) {
+                List<String> jdks = new ArrayList<String>(axes.get(platform));
+                Collections.sort(jdks);
+                for (String jdk : jdks) {
                     String targetDirectoryName = platformDirectory.getAbsolutePath() + "/configurations/axis-jdk/" + jdk + "/axis-label/" + platform + "/builds/";
                     File latestBuildDirectory = getLatestBuildDirectory(new File(targetDirectoryName));
                     if (latestBuildDirectory != null) {
@@ -285,6 +314,9 @@ public class SummarizeBuildResults {
                             System.err.println("************ Exception " + e.getMessage() + " on " + latestBuildDirectory.getAbsolutePath());
                         }
 
+                    } else {
+                        // FIXME figure out how to deal with missing results
+                        // BuildResult buildResult = new BuildResult(platformDirectory.getName(),  buildDateTime, jdk, platform, mrt.getResult(), 0, 0, 0, mrt.getNumber());
                     }
                 }
 
@@ -315,7 +347,7 @@ public class SummarizeBuildResults {
 		} 
 
 		System.out.println("Starting at " + hudsonJobsRootName + " matchings on [" + directoryMatchExpression + "]");
-		SummarizeBuildResults me = new SummarizeBuildResults();
+		SummarizeBuildResults me = new SummarizeBuildResults(hudsonJobsRootName);
         File hudsonJobsRoot = new File(hudsonJobsRootName);
         FileWriter writer = me.createResultsFileWriter();
         Map<String, List<BuildResult>> allResults = me.getAllResults(hudsonJobsRoot, directoryMatchExpression);

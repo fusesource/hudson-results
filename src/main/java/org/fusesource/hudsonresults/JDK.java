@@ -17,5 +17,5 @@
 package org.fusesource.hudsonresults;
 
 public enum JDK {
-	jdk6, jdk7
+	jdk6, jdk7, openjdk6, openjdk7
 }
