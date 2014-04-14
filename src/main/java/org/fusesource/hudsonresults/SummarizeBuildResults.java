@@ -61,7 +61,7 @@ public class SummarizeBuildResults {
     private static final String ACCEPT_STRING_RH_6_1 = ".*6[-\\.]1.*platform";
 
     // Root of URL to link back to test results
-    private static final String REPORT_URL_ROOT="http://ci.fusesource.com/hudson/job/";
+    private String REPORT_URL_ROOT =  System.getenv("JENKINS_URL") + "job/";      // TODO rename
 
     // FIXME decide which of these we're going to need, and pick better names.
     //private Set<String> labels;
@@ -77,6 +77,8 @@ public class SummarizeBuildResults {
 
         testSuiteNames = jenkinsJobsVisitor.getTestSuiteNames();  // TODO do we need this?
         axes = jenkinsJobsVisitor.getAxes();
+
+        System.out.println(">>>>> Using JenkinsURL [" + REPORT_URL_ROOT + "]");
     }
 
     /**
