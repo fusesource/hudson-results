@@ -83,7 +83,7 @@ public class SummarizeBuildResults {
         axes.remove("ubuntu");
         for (String label : axes.keySet()) {
             Set<String> jdksForLabel = axes.get(label);
-            axes.remove("jdk5");
+            jdksForLabel.remove("jdk5");
         }
 
         System.out.println(">>>>> Using JenkinsURL [" + REPORT_URL_ROOT + "]");
