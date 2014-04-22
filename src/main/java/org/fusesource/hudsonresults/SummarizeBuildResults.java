@@ -56,6 +56,7 @@ public class SummarizeBuildResults {
     private static final String tdCloseTag = "</td>";
     public static final String NEW_LINE = "\n";
     private static String hudsonJobsRootName ="/mnt/hudson/jobs";
+    private static String reportTitle = "JBoss Fuse 6.1 Platform Test Results";
 
     // RE to select which test directories we want results from.
     private static final String ACCEPT_STRING_RH_6_1 = ".*6[-\\.]1.*platform";
@@ -227,7 +228,7 @@ public class SummarizeBuildResults {
                 "--></style>";
         writer.write(style + NEW_LINE);
         writer.write("<table border=\"1\">"  + NEW_LINE);
-        writer.write("<caption>JBoss Fuse 6.1 Platform Test Results as of " + new Date().toString() + "</caption>" + NEW_LINE);
+        writer.write("<caption>" + reportTitle + " as of " + new Date().toString() + "</caption>" + NEW_LINE);
         printHtmlHeaders(writer);
 
         // Write one row for each project
@@ -351,7 +352,9 @@ public class SummarizeBuildResults {
             hudsonJobsRootName = args[0];
             if (args.length > 1) {
                 directoryMatchExpression = args[1];
-
+                if (args.length > 2) {
+                    reportTitle = args[2];
+                }
             }
 		} 
 
