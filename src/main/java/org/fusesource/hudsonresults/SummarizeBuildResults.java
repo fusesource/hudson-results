@@ -78,6 +78,13 @@ public class SummarizeBuildResults {
         testSuiteNames = jenkinsJobsVisitor.getTestSuiteNames();  // TODO do we need this?
         axes = jenkinsJobsVisitor.getAxes();
 
+        // FIXME hack to remove old ubuntu and jdk5 directories from report.
+        axes.remove("ubuntu");
+        for (String label : axes.keySet()) {
+            Set<String> jdksForLabel = axes.get(label);
+            axes.remove("jdk5");
+        }
+
         System.out.println(">>>>> Using JenkinsURL [" + REPORT_URL_ROOT + "]");
     }
 
