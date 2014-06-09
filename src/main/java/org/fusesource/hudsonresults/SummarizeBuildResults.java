@@ -81,6 +81,7 @@ public class SummarizeBuildResults {
 
         // FIXME hack to remove old ubuntu and jdk5 directories from report.
         axes.remove("ubuntu");
+        axes.remove("win");
         for (String label : axes.keySet()) {
             Set<String> jdksForLabel = axes.get(label);
             jdksForLabel.remove("jdk5");
@@ -291,13 +292,20 @@ public class SummarizeBuildResults {
         for (File platformDirectory : platformDirectories) {
             List<String> platforms = new ArrayList<String>(axes.keySet());
             Collections.sort(platforms);
+            System.out.println("PLATFORMS");
+            for (String platform : platforms) {
+                System.out.println("\t" + platform);
+            }
+
             for (String platform : platforms) {
                 List<String> jdks = new ArrayList<String>(axes.get(platform));
                 Collections.sort(jdks);
                 for (String jdk : jdks) {
+                    System.out.println(">>> Searching for a result for " + platform + " " + jdk);
                     String targetDirectoryName = platformDirectory.getAbsolutePath() + "/configurations/axis-jdk/" + jdk + "/axis-label/" + platform + "/builds/";
                     File latestBuildDirectory = getLatestBuildDirectory(new File(targetDirectoryName));
                     if (latestBuildDirectory != null) {
+                        System.out.println("\tGot " + latestBuildDirectory.getAbsolutePath());
                         try {
                             String buildDateTime = latestBuildDirectory.getName(); 	// directory name of the build is date time in the format 2012-11-02_21-09-35
                             String latestBuildFileName = latestBuildDirectory.getAbsolutePath() + "/build.xml";
@@ -331,6 +339,14 @@ public class SummarizeBuildResults {
                 }
 
             }
+        }
+
+
+        System.out.println(">>>>>> RETURNING: allResults has " + allResults.keySet().size() + " elements <<<<<<<");
+        for (String testSuiteName : allResults.keySet()) {
+            System.out.println(">>>>> " + testSuiteName);
+            List<BuildResult> results = allResults.get(testSuiteName);
+            System.out.println("\tHas " + results.size() + " results");
         }
         return allResults;
     }
