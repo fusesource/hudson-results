@@ -53,6 +53,7 @@ public class SummarizeBuildResults {
     private static final String passedTdOpenTag = "<td style=\"background-color: #2E8B57;\">";
     private static final String failedTestsTdOpenTag = "<td style=\"background-color: #ffd700;\">";
     private static final String failedBuildTdOpenTag =  "<td style=\"background-color: #dc143c;\">";
+    private static final String notRunTdOpenTag =  "<td style=\"background-color: #f5f5dc;\">";
     private static final String tdCloseTag = "</td>";
     public static final String NEW_LINE = "\n";
     private static String hudsonJobsRootName ="/mnt/hudson/jobs";
@@ -64,9 +65,6 @@ public class SummarizeBuildResults {
     // Root of URL to link back to test results
     private String REPORT_URL_ROOT =  System.getenv("JENKINS_URL") + "job/";      // TODO rename
 
-    // FIXME decide which of these we're going to need, and pick better names.
-    //private Set<String> labels;
-    //private Set<String> jdks;
     private Set<String> testSuiteNames;
     private Map<String, Set<String>> axes;
 
@@ -144,7 +142,6 @@ public class SummarizeBuildResults {
                 if (lastBuildFile.exists()) {
                     return lastBuildDirectory;
                 } else if (contents.size() > 1) {
-                    System.out.println(">>>> Couldn't find [" + latestBuildFileName + "] using " + contents.get(1));
                     return contents.get(1);
                 }
             }
@@ -197,6 +194,8 @@ public class SummarizeBuildResults {
                                     + "<br/><small><small>(" + br.getFormattedDuration() + " " + br.getFormattedRunDate() + ")</small></small>";    // TODO do this with CSS
                             if (br.getResult().equalsIgnoreCase("success")) {
                                 writer.write(passedTdOpenTag + testResult + tdCloseTag);
+                            } else if (br.getResult().equalsIgnoreCase("NOTRUN")) {
+                                writer.write(notRunTdOpenTag + "Not Run" + tdCloseTag);
                             } else if (br.getTestsRun().equals(0)) {
                                 writer.write(failedBuildTdOpenTag + testResult + tdCloseTag);
                             } else {
@@ -292,20 +291,14 @@ public class SummarizeBuildResults {
         for (File platformDirectory : platformDirectories) {
             List<String> platforms = new ArrayList<String>(axes.keySet());
             Collections.sort(platforms);
-            System.out.println("PLATFORMS");
-            for (String platform : platforms) {
-                System.out.println("\t" + platform);
-            }
 
             for (String platform : platforms) {
                 List<String> jdks = new ArrayList<String>(axes.get(platform));
                 Collections.sort(jdks);
                 for (String jdk : jdks) {
-                    System.out.println(">>> Searching for a result for " + platform + " " + jdk);
                     String targetDirectoryName = platformDirectory.getAbsolutePath() + "/configurations/axis-jdk/" + jdk + "/axis-label/" + platform + "/builds/";
                     File latestBuildDirectory = getLatestBuildDirectory(new File(targetDirectoryName));
                     if (latestBuildDirectory != null) {
-                        System.out.println("\tGot " + latestBuildDirectory.getAbsolutePath());
                         try {
                             String buildDateTime = latestBuildDirectory.getName(); 	// directory name of the build is date time in the format 2012-11-02_21-09-35
                             String latestBuildFileName = latestBuildDirectory.getAbsolutePath() + "/build.xml";
@@ -333,21 +326,19 @@ public class SummarizeBuildResults {
                         }
 
                     } else {
-                        // FIXME figure out how to deal with missing results
-                        // BuildResult buildResult = new BuildResult(platformDirectory.getName(),  buildDateTime, jdk, platform, mrt.getResult(), 0, 0, 0, mrt.getNumber());
+                        BuildResult buildResult = new BuildResult(platformDirectory.getName(),  "2012-11-02_21-09-35", jdk, platform, "NOTRUN", 0, 0, 0, -1);
+                        List<BuildResult> platformResults = allResults.get(platformDirectory.getName());
+                        if (platformResults == null) {
+                            platformResults = new ArrayList<>();
+                            allResults.put(platformDirectory.getName(), platformResults);
+                        }
+                        platformResults.add(buildResult);
                     }
                 }
 
             }
         }
 
-
-        System.out.println(">>>>>> RETURNING: allResults has " + allResults.keySet().size() + " elements <<<<<<<");
-        for (String testSuiteName : allResults.keySet()) {
-            System.out.println(">>>>> " + testSuiteName);
-            List<BuildResult> results = allResults.get(testSuiteName);
-            System.out.println("\tHas " + results.size() + " results");
-        }
         return allResults;
     }
 
