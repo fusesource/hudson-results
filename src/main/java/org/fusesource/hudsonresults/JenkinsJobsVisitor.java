@@ -42,7 +42,7 @@ public class JenkinsJobsVisitor<T> extends SimpleFileVisitor<T> {
         Path directoryPath = (Path) dir;
         File directory = directoryPath.toFile();
         String fileName = directory.getAbsolutePath();
-        if ((fileName.contains("axis-jdk") && fileName.contains("axis-label")) && !fileName.endsWith("axis-label") ) {
+        if ((fileName.contains("axis-jdk") && fileName.contains("axis-label")) && fileName.endsWith("builds") ) {
             List<String> parts = Arrays.asList(fileName.split("/"));
             int jdkIndex = parts.indexOf("axis-jdk") + 1;
             int labelIndex = parts.indexOf("axis-label") + 1;
@@ -50,10 +50,10 @@ public class JenkinsJobsVisitor<T> extends SimpleFileVisitor<T> {
             String jdk = parts.get(jdkIndex);
             String testSuiteName = parts.get(jdkIndex - 3);
 
-            testSuiteNames.add(testSuiteName);
-            if (!testSuiteName.matches(directoryMatchExpression)) {
+            if (!testSuiteName.matches(directoryMatchExpression) || testSuiteName.startsWith("BuildResults")) {
                 return FileVisitResult.CONTINUE;
             }
+            testSuiteNames.add(testSuiteName);
             jdks.add(jdk);
             labels.add(label);
 
