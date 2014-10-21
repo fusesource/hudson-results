@@ -69,8 +69,8 @@ public class SummarizeBuildResults {
     private Map<String, Set<String>> axes;
 
 
-    public SummarizeBuildResults(String hudsonJobsRootName) throws IOException {
-        JenkinsJobsVisitor<Path> jenkinsJobsVisitor = new JenkinsJobsVisitor<>();
+    public SummarizeBuildResults(String hudsonJobsRootName, String directoryMatchExpression) throws IOException {
+        JenkinsJobsVisitor<Path> jenkinsJobsVisitor = new JenkinsJobsVisitor<>(directoryMatchExpression);
         Path rootPath = Paths.get(hudsonJobsRootName);
         Files.walkFileTree(rootPath, jenkinsJobsVisitor);
 
@@ -366,7 +366,7 @@ public class SummarizeBuildResults {
 		} 
 
 		System.out.println("Starting at " + hudsonJobsRootName + " matchings on [" + directoryMatchExpression + "]");
-		SummarizeBuildResults me = new SummarizeBuildResults(hudsonJobsRootName);
+		SummarizeBuildResults me = new SummarizeBuildResults(hudsonJobsRootName, directoryMatchExpression);
         File hudsonJobsRoot = new File(hudsonJobsRootName);
         FileWriter writer = me.createResultsFileWriter();
         Map<String, List<BuildResult>> allResults = me.getAllResults(hudsonJobsRoot, directoryMatchExpression);

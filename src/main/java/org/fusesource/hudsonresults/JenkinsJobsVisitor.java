@@ -1,5 +1,6 @@
 package org.fusesource.hudsonresults;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Path;
@@ -21,6 +22,11 @@ public class JenkinsJobsVisitor<T> extends SimpleFileVisitor<T> {
     Set<String> testSuiteNames = new HashSet<>();         // name of all test suites we're interested in.
     Set<String> jdks = new HashSet<>();                   // All jdks found
     Set<String> labels = new HashSet<>();                  // All labels found.  Not sure if we need jdks and labels; maybe we just need axes?
+    private String directoryMatchExpression;
+
+    public JenkinsJobsVisitor(String directoryMatchExpression) {
+        this.directoryMatchExpression = directoryMatchExpression;
+    }
 
     @Override
     public FileVisitResult visitFile(T file, BasicFileAttributes attributes) {
@@ -33,9 +39,10 @@ public class JenkinsJobsVisitor<T> extends SimpleFileVisitor<T> {
      // /home/jenkins/jobs/smx4-specs-2.3.0.redhat-6-1-x-stable-platform/configurations/axis-jdk/jdk6/axis-label
      */
     public FileVisitResult preVisitDirectory(T dir, BasicFileAttributes attrs) throws IOException {
-        Path p = (Path) dir;
-        String fileName = p.toFile().getAbsolutePath();
-        if ((fileName.contains("axis-jdk") && fileName.contains("axis-label")) && !fileName.endsWith("axis-label") ) {   // TODO match on builds for platform builds
+        Path directoryPath = (Path) dir;
+        File directory = directoryPath.toFile();
+        String fileName = directory.getAbsolutePath();
+        if ((fileName.contains("axis-jdk") && fileName.contains("axis-label")) && !fileName.endsWith("axis-label") ) {
             List<String> parts = Arrays.asList(fileName.split("/"));
             int jdkIndex = parts.indexOf("axis-jdk") + 1;
             int labelIndex = parts.indexOf("axis-label") + 1;
@@ -44,6 +51,9 @@ public class JenkinsJobsVisitor<T> extends SimpleFileVisitor<T> {
             String testSuiteName = parts.get(jdkIndex - 3);
 
             testSuiteNames.add(testSuiteName);
+            if (!testSuiteName.matches(directoryMatchExpression)) {
+                return FileVisitResult.CONTINUE;
+            }
             jdks.add(jdk);
             labels.add(label);
 
