@@ -18,11 +18,12 @@ package org.fusesource.hudsonresults;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.Locale;
 
 public class BuildResult {
 	private String name;
-	private String runDate;
+	private Date runDate;
 	private String result;		// from MatrixRunType.getResult..I think this includes SUCCESS, FAILURE.
 	private Integer testsRun;
 	private Integer failedTests;
@@ -43,7 +44,7 @@ public class BuildResult {
 	 * @param testsRun
 	 * @param testsFailed
 	 */
-	public BuildResult(String name, String runDate, String jdk, String platform, String result, int testsRun, int testsFailed, int duration, int buildNumber) {
+	public BuildResult(String name, Date runDate, String jdk, String platform, String result, int testsRun, int testsFailed, int duration, int buildNumber) {
 		this.name = name;
 		this.runDate = runDate;
 		this.jdk = jdk;
@@ -72,10 +73,10 @@ public class BuildResult {
 	public void setName(String name) {
 		this.name = name;
 	}
-	public String getRunDate() {
+	public Date getRunDate() {
 		return runDate;
 	}
-	public void setRunDate(String runDate) {
+	public void setRunDate(Date runDate) {
 		this.runDate = runDate;
 	}
 	public String getResult() {
@@ -149,14 +150,9 @@ public class BuildResult {
      */
     public String getFormattedRunDate() {
 		try {
-			int firstDash = runDate.indexOf("-");
-			int secondDash = runDate.indexOf("-", firstDash + 1);
-			String month = runDate.substring(firstDash + 1, firstDash + 3);
-			String day = runDate.substring(secondDash + 1, secondDash + 3);
 
 			Calendar cal = Calendar.getInstance();
-			cal.set(Calendar.MONTH, Integer.parseInt(month) - 1);
-			cal.set(Calendar.DAY_OF_MONTH, Integer.parseInt(day));
+			cal.setTime(runDate);
 
 			SimpleDateFormat formatter = new SimpleDateFormat("MMM d", currentLocale);
 			String result = formatter.format(cal.getTime());

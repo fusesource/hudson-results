@@ -32,15 +32,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -116,40 +108,33 @@ public class SummarizeBuildResults {
 	}
 
 
-	/**
-	 * Return the latest build in a given build directory
-	 * 
-	 * @param targetDirectory Something like: cxf-2.6.0.fuse-7-1-x-stable-platform/configurations/axis-jdk/jdk6/axis-label/ubuntu/builds/
-	 * @return cxf-2.6.0.fuse-7-1-x-stable-platform/configurations/axis-jdk/jdk6/axis-label/ubuntu/builds/2012-11-02_21-09-35
-	 */
+    /**
+     * Return a File pointing to the directory containing the latest completed build
+     *
+     * @param targetDirectory i.e. cxf-2.6.0.fuse-7-1-x-stable-platform/configurations/axis-jdk/jdk6/axis-label/ubuntu/builds/
+     * @return File reference to the most recent directory containing a completed build like
+     * cxf-2.6.0.fuse-7-1-x-stable-platform/configurations/axis-jdk/jdk6/axis-label/ubuntu/builds/21
+     *
+     * @throws IOException
+     */
     private File getLatestBuildDirectory(File targetDirectory) throws IOException {
         if (targetDirectory != null && targetDirectory.listFiles() != null) {
-            // Jenkins creates a numbered symlink for every results directory.  This gets rid of them.
             List<File> fud = Arrays.asList(targetDirectory.listFiles());
-            List<File> contents = fud.stream().
-                    filter(f -> !Files.isSymbolicLink(Paths.get(f.getAbsolutePath()))).
-                    sorted(new BuildDirectoryComparator()).collect(Collectors.toList());
-
-            //Collections.sort(contents, new BuildDirectoryComparator());
-            Collections.reverse(contents);
-
-            // Return the most recent build directory.  The test for lastBuildFile.exists() could fail
-            // if the build is still running.   NOTE: easy to work around with the REST api
-            if (!contents.isEmpty()) {
-                File lastBuildDirectory = contents.get(0);
-                String latestBuildFileName = lastBuildDirectory.getAbsolutePath() + "/build.xml";
-                File lastBuildFile = new File(latestBuildFileName);
-                if (lastBuildFile.exists()) {
-                    return lastBuildDirectory;
-                } else if (contents.size() > 1) {
-                    return contents.get(1);
-                }
+            Optional<File> latest =
+                    fud.stream().
+                            filter(f -> !Files.isSymbolicLink(Paths.get(f.getAbsolutePath())) && !f.getName().endsWith("legacyIds"))
+                            .filter(f -> new File(f.getAbsolutePath() + "/build.xml").exists())
+                            .sorted(new BuildDirectoryComparator())
+                            .findFirst();
+            if (latest.isPresent()) {
+                return latest.get();
+            } else {
+                return null;
             }
         }
 
         return null;
     }
-
 
 	/**
 	 * Return a list of platform test result directories matching the directoryMatchExpression.
@@ -300,18 +285,19 @@ public class SummarizeBuildResults {
                     File latestBuildDirectory = getLatestBuildDirectory(new File(targetDirectoryName));
                     if (latestBuildDirectory != null) {
                         try {
+
                             String buildDateTime = latestBuildDirectory.getName(); 	// directory name of the build is date time in the format 2012-11-02_21-09-35
                             String latestBuildFileName = latestBuildDirectory.getAbsolutePath() + "/build.xml";
                             MatrixRunType mrt = getTestSuiteFromFile(latestBuildFileName);  // Gets FileNotFoundException...can we get second oldest here?
                             ActionsType actions = mrt.getActions();
                             HudsonTasksJunitTestResultActionType junitResults = actions.getHudsonTasksJunitTestResultAction();
-
+                            Date runDate = new Date(latestBuildDirectory.lastModified());
                             BuildResult buildResult;
                             if (junitResults != null) {
-                                buildResult = new BuildResult(platformDirectory.getName(),  buildDateTime, jdk, platform,
+                                buildResult = new BuildResult(platformDirectory.getName(),  runDate, jdk, platform,
                                         mrt.getResult(), junitResults.getTotalCount(), junitResults.getFailCount(), mrt.getDuration(), mrt.getNumber());
                             } else {
-                                buildResult = new BuildResult(platformDirectory.getName(),  buildDateTime, jdk, platform, mrt.getResult(), 0, 0, 0, mrt.getNumber());
+                                buildResult = new BuildResult(platformDirectory.getName(),  runDate, jdk, platform, mrt.getResult(), 0, 0, 0, mrt.getNumber());
                             }
                             // TODO need to store by platformDirectory.getName() (which is projectname) jdk, platform
                             List<BuildResult> platformResults = allResults.get(platformDirectory.getName());
@@ -326,7 +312,7 @@ public class SummarizeBuildResults {
                         }
 
                     } else {
-                        BuildResult buildResult = new BuildResult(platformDirectory.getName(),  "2012-11-02_21-09-35", jdk, platform, "NOTRUN", 0, 0, 0, -1);
+                        BuildResult buildResult = new BuildResult(platformDirectory.getName(),  new Date(), jdk, platform, "NOTRUN", 0, 0, 0, -1);
                         List<BuildResult> platformResults = allResults.get(platformDirectory.getName());
                         if (platformResults == null) {
                             platformResults = new ArrayList<>();
@@ -405,7 +391,7 @@ class PlatformDirectoryFilter implements FileFilter {
 class BuildDirectoryComparator implements Comparator<File> {
     @Override
 	public int compare(File first, File second) {
-		if (first.lastModified() > second.lastModified()) {
+		if (first.lastModified() <= second.lastModified()) {
 			return 1;
 		} else {
 			return -1;
