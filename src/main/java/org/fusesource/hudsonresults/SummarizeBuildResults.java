@@ -158,7 +158,7 @@ public class SummarizeBuildResults {
 	 * @param hudsonJobsRoot the root of the Hudson jobs directory, i.e. /mnt/hudson/jobs
      * @param directoryMatchExpression regular expression for selecting target directories
 	 */
-	private List<File> getPlatformDirectories(File hudsonJobsRoot, String directoryMatchExpression) {
+	public List<File> getPlatformDirectories(File hudsonJobsRoot, String directoryMatchExpression) {
 		PlatformDirectoryFilter pdf = new PlatformDirectoryFilter(directoryMatchExpression);
         List<File> directories = Arrays.asList(hudsonJobsRoot.listFiles(pdf)).
                 stream().

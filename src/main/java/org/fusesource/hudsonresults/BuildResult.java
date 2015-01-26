@@ -148,17 +148,22 @@ public class BuildResult {
      * @return Formatted date: "SEP 07"
      */
     public String getFormattedRunDate() {
-        int firstDash = runDate.indexOf("-");
-        int secondDash = runDate.indexOf("-", firstDash + 1);
-        String month = runDate.substring(firstDash + 1, firstDash + 3);
-        String day = runDate.substring(secondDash + 1, secondDash + 3);
+		try {
+			int firstDash = runDate.indexOf("-");
+			int secondDash = runDate.indexOf("-", firstDash + 1);
+			String month = runDate.substring(firstDash + 1, firstDash + 3);
+			String day = runDate.substring(secondDash + 1, secondDash + 3);
 
-        Calendar cal = Calendar.getInstance();
-        cal.set(Calendar.MONTH, Integer.parseInt(month) - 1);
-        cal.set(Calendar.DAY_OF_MONTH, Integer.parseInt(day));
+			Calendar cal = Calendar.getInstance();
+			cal.set(Calendar.MONTH, Integer.parseInt(month) - 1);
+			cal.set(Calendar.DAY_OF_MONTH, Integer.parseInt(day));
 
-        SimpleDateFormat formatter = new SimpleDateFormat("MMM d", currentLocale);
-        String result = formatter.format(cal.getTime());
-        return result;
+			SimpleDateFormat formatter = new SimpleDateFormat("MMM d", currentLocale);
+			String result = formatter.format(cal.getTime());
+			return result;
+		}catch (Exception e) {
+			System.out.println(">>>>> Exception " + e.getMessage() + " formatting runDate [" + runDate + "]");
+			return " ";
+		}
     }
 }
