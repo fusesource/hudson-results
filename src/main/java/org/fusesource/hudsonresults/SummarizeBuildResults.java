@@ -293,11 +293,12 @@ public class SummarizeBuildResults {
                             HudsonTasksJunitTestResultActionType junitResults = actions.getHudsonTasksJunitTestResultAction();
                             Date runDate = new Date(latestBuildDirectory.lastModified());
                             BuildResult buildResult;
+                            String buildNumber = latestBuildDirectory.getName();
                             if (junitResults != null) {
                                 buildResult = new BuildResult(platformDirectory.getName(),  runDate, jdk, platform,
-                                        mrt.getResult(), junitResults.getTotalCount(), junitResults.getFailCount(), mrt.getDuration(), mrt.getNumber());
+                                        mrt.getResult(), junitResults.getTotalCount(), junitResults.getFailCount(), mrt.getDuration(), Integer.parseInt(buildNumber));
                             } else {
-                                buildResult = new BuildResult(platformDirectory.getName(),  runDate, jdk, platform, mrt.getResult(), 0, 0, 0, mrt.getNumber());
+                                buildResult = new BuildResult(platformDirectory.getName(),  runDate, jdk, platform, mrt.getResult(), 0, 0, 0, Integer.parseInt(buildNumber));
                             }
                             // TODO need to store by platformDirectory.getName() (which is projectname) jdk, platform
                             List<BuildResult> platformResults = allResults.get(platformDirectory.getName());
@@ -340,8 +341,12 @@ public class SummarizeBuildResults {
 	public static void main(String[] args) throws JAXBException, IOException {
         hudsonJobsRootName = "/Users/kearls/data"; //"/mnt/hudson/jobs";
         String directoryMatchExpression = ACCEPT_STRING_RH_6_1;
+        directoryMatchExpression=".*6[-\\.]2.*platform";
+        hudsonJobsRootName="/home/kearls/sources/fusesource/hudson-results/src/test/data/jobs/";
 
-		if (args.length > 0) {
+
+
+        if (args.length > 0) {
             hudsonJobsRootName = args[0];
             if (args.length > 1) {
                 directoryMatchExpression = args[1];
