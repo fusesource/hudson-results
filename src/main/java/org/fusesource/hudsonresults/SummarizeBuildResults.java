@@ -173,7 +173,7 @@ public class SummarizeBuildResults {
                 for (String jdk : jdks) {
                     for (BuildResult br : buildResults) {   // FIXME this is horrible.
                         if (platform.equals(br.getPlatform()) && jdk.equals(br.getJdk())) {
-                            String linkToResultsPage = REPORT_URL_ROOT + projectName + "/" + br.getBuildNumber() + "/" + "jdk=" + jdk + ",label=" + platform + "/";
+                            String linkToResultsPage = "https://" + REPORT_URL_ROOT + projectName + "/" + br.getBuildNumber() + "/" + "jdk=" + jdk + ",label=" + platform + "/";
 
                             String testResult = "<a href=\"" + linkToResultsPage + "\">" + br.getFailedTests() + "/" + br.getTestsRun() + "</a>"
                                     + "<br/><small><small>(" + br.getFormattedDuration() + " " + br.getFormattedRunDate() + ")</small></small>";    // TODO do this with CSS
