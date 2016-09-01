@@ -224,7 +224,7 @@ public class SummarizeBuildResults {
                 sorted().
                 forEach(p -> printResultsRow(p, allResults.get(p), writer));
 
-        writer.write("<table>" + NEW_LINE);
+        writer.write("</table>" + NEW_LINE);
         writer.write("<br/>" + NEW_LINE);
         writer.write("<p>Red cells indicate build failures, yellow cells indicate builds with test failures, green cells indicate successful builds.  ");
         writer.write("Cell results N/M show N test failures out of M tests run</p>" + NEW_LINE);
