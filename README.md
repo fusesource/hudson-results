@@ -11,6 +11,3 @@ The first argument is the location of Hudson's jobs directory.  The second is a 
 
 
 
-
-
-
