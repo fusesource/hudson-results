@@ -167,6 +167,7 @@ public class SummarizeBuildResults {
             Collections.reverse(buildResults);
             Collections.sort(buildResults, new BuildResultComparator());   // TODO what does this sort by?  Is there an easier way to deal with jdks and labels?
 
+            writer.write("<tr>");
             writer.write("<td>" + projectName + "</td>");
             List<String> platforms = new ArrayList<String>(axes.keySet());
             Collections.sort(platforms);
@@ -210,11 +211,12 @@ public class SummarizeBuildResults {
      */
     public void createHTMLSummary(FileWriter writer, Map<String, List<BuildResult>> allResults) throws JAXBException, IOException {
         writer.write("<html>" + NEW_LINE);
+        writer.write("<head><title>" + reportTitle + " as of " + new Date().toString() + "</title></head>");
         writer.write("<body>" + NEW_LINE);
-        String style = "<style><!--\n" +
+        /*String style = "<style><!--\n" +
                 "table { border-collapse: collapse; font-family: Futura, Arial, sans-serif; } caption { font-size: larger; margin: 1em auto; } th, td { padding: .65em; } th, thead { background: #000; color: #fff; border: 1px solid #000; } td { border: 1px solid #777; }\n" +
                 "--></style>";
-        writer.write(style + NEW_LINE);
+        writer.write(style + NEW_LINE); */
         writer.write("<table border=\"1\">"  + NEW_LINE);
         writer.write("<caption>" + reportTitle + " as of " + new Date().toString() + "</caption>" + NEW_LINE);
         printHtmlHeaders(writer);
